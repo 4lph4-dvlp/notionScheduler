@@ -1,6 +1,7 @@
 """Neutral Scheduler schema and task value objects."""
 
 from dataclasses import dataclass
+from datetime import datetime
 
 
 class SchedulerError(Exception):
@@ -97,3 +98,51 @@ def parse_page(page):
         status=(props.get("상태", {}).get("status") or {}).get("name"),
         memo=plain_text(props.get("메모", {}).get("rich_text")),
     )
+
+
+FIELD_TYPES = {
+    "title": ("이름", "title"),
+    "selection": ("선택", "select"),
+    "category": ("구분", "multi_select"),
+    "due_date": ("DueDate", "date"),
+    "plan_date": ("Plan", "date"),
+    "priority": ("우선순위", "select"),
+    "status": ("상태", "status"),
+    "memo": ("메모", "rich_text"),
+}
+
+
+def serialize_fields(fields: dict, schema: dict) -> dict:
+    """Encode only explicitly supplied Scheduler fields."""
+    properties = {}
+    for key, value in fields.items():
+        if key not in FIELD_TYPES:
+            raise InputError(f"Unknown Scheduler field: {key}")
+        name, kind = FIELD_TYPES[key]
+        if kind in {"title", "rich_text"}:
+            if not isinstance(value, str) or (kind == "title" and not value.strip()):
+                raise InputError(f"{key} must be text" + (" with a value." if kind == "title" else "."))
+            item = {"text": {"content": value}}
+            properties[name] = {kind: [item] if value else []}
+        elif kind in {"select", "status"}:
+            choices = {item.get("name") for item in schema[name][kind].get("options", [])}
+            if not isinstance(value, str) or value not in choices:
+                raise InputError(f"Invalid {key} option.")
+            properties[name] = {kind: {"name": value}}
+        elif kind == "multi_select":
+            if not isinstance(value, (list, tuple)) or not value or any(not isinstance(item, str) for item in value):
+                raise InputError("category must be a nonempty list of option names.")
+            choices = {item.get("name") for item in schema[name][kind].get("options", [])}
+            if any(item not in choices for item in value):
+                raise InputError("Invalid category option.")
+            properties[name] = {kind: [{"name": item} for item in value]}
+        else:
+            if value is not None:
+                if not isinstance(value, str):
+                    raise InputError(f"{key} must be an ISO date or datetime.")
+                try:
+                    datetime.fromisoformat(value)
+                except ValueError as error:
+                    raise InputError(f"{key} must be an ISO date or datetime.") from error
+            properties[name] = {"date": {"start": value} if value is not None else None}
+    return properties

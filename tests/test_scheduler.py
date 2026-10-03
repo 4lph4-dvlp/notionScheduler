@@ -6,7 +6,7 @@ import pytest
 
 from notion_scheduler import __version__
 from notion_scheduler.client import NotionClient
-from notion_scheduler.schema import SchemaError, TargetError
+from notion_scheduler.schema import InputError, SchemaError, TargetError
 from notion_scheduler.tasks import Scheduler
 
 
@@ -79,4 +79,49 @@ def test_schema_mismatch_fails_closed():
     del sdk.data_sources.retrieve.return_value["properties"]["Plan"]
     with pytest.raises(SchemaError, match="Plan"):
         Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk)).list_tasks()
+    sdk.pages.update.assert_not_called()
+
+
+def test_general_create_preview_and_apply():
+    sdk = sdk_with_pages()
+    scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
+    preview = scheduler.preview_create(title="Pay rent", category=("개인",), plan_date="2026-10-04", memo="Bank transfer")
+    sdk.pages.create.assert_not_called()
+    assert preview.properties["Plan"] == {"date": {"start": "2026-10-04"}}
+    assert preview.properties["상태"] == {"status": {"name": "시작 전"}}
+    scheduler.apply(preview)
+    assert sdk.pages.create.call_args.kwargs["parent"]["data_source_id"] == "source-one"
+
+
+def test_sparse_update_can_change_plan_and_status_explicitly():
+    sdk = sdk_with_pages()
+    scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
+    preview = scheduler.preview_update(page_id="page-one", plan_date="2026-10-04", status="진행 중")
+    assert set(preview.properties) == {"Plan", "상태"}
+    scheduler.apply(preview)
+    assert set(sdk.pages.update.call_args.kwargs["properties"]) == {"Plan", "상태"}
+
+
+def test_complete_by_id_and_ambiguous_title_fails_closed():
+    sdk = sdk_with_pages()
+    scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
+    preview = scheduler.preview_complete(page_id="page-one")
+    assert preview.properties == {"상태": {"status": {"name": "완료"}}}
+    scheduler.apply(preview)
+    assert sdk.pages.update.call_args.kwargs["properties"] == preview.properties
+
+    sdk.data_sources.query.side_effect = lambda **kwargs: {"results": [page("a"), page("b")], "has_more": False}
+    with pytest.raises(InputError, match="exactly one"):
+        scheduler.preview_update(lookup_title="Buy groceries", memo="changed")
+
+
+def test_invalid_option_and_stale_preview_never_write():
+    sdk = sdk_with_pages()
+    scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
+    with pytest.raises(InputError, match="Invalid status"):
+        scheduler.preview_update(page_id="page-one", status="not a status")
+    preview = scheduler.preview_update(page_id="page-one", memo="new note")
+    sdk.data_sources.query.side_effect = lambda **kwargs: {"results": [page("page-one", "Renamed")], "has_more": False}
+    with pytest.raises(InputError, match="changed"):
+        scheduler.apply(preview)
     sdk.pages.update.assert_not_called()
