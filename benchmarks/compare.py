@@ -31,6 +31,10 @@ def validate_report(report: dict) -> None:
     indexed = {(entry.get("transport"), entry.get("operation")): entry for entry in entries}
     if len(indexed) != len(entries):
         raise ValueError("Duplicate transport and operation.")
+    if any(entry.get("status") == "measured" and entry.get("operation") in ("create", "update") for entry in entries):
+        cleanup = report.get("cleanup") or {}
+        if not cleanup.get("database_id") or cleanup.get("in_trash") is not True or not cleanup.get("evidence"):
+            raise ValueError("Measured write report needs verified disposable database cleanup.")
     for transport in TRANSPORTS:
         for operation in OPERATIONS:
             entry = indexed.get((transport, operation))

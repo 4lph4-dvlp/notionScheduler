@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
-  "access_context": "Read-only on the personal Scheduler: local Notion integration token for API and a separately authenticated official remote Notion MCP OAuth connection. Data source 21d53280-64be-80ec-af4e-000b679f03bb. No live write performed.",
+  "access_context": "Read-only comparison on personal Scheduler data source 21d53280-64be-80ec-af4e-000b679f03bb. Approved create/update comparison on isolated data source b16c26fa-617d-4560-ab9d-80760cadf080. Local integration token for API, separately authenticated official remote Notion MCP OAuth connection. The temporary database was moved to trash after verification.",
+  "cleanup": {
+    "database_id": "a5f8d215-7dc9-4ce8-a28d-200fc668f6be",
+    "in_trash": true,
+    "evidence": "The archive operation returned in_trash=true; an independent database retrieve also returned in_trash=true after checking the two benchmark page titles."
+  },
   "measurements": [
     {
       "transport": "api",
@@ -19,28 +24,34 @@
     {
       "transport": "api",
       "operation": "create",
-      "status": "approval_required",
-      "sample_size": null,
-      "tool_calls": null,
-      "elapsed_ms": null,
-      "returned_bytes": null,
+      "status": "measured",
+      "sample_size": 1,
+      "tool_calls": 1,
+      "elapsed_ms": 3764,
+      "returned_bytes": 757,
       "model_tokens": null,
       "model_token_source": "unavailable",
-      "metric_source": "Pending approved test database and live call",
-      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+      "metric_source": "PowerShell Stopwatch around uv run notion-scheduler create --apply; UTF-8 bytes of agent-visible CLI JSON; includes process startup, target/schema checks, preview and apply reread",
+      "evidence": "2026-10-04 live API create; post-write list showed the approved fields",
+      "approval": "User replied '다음 작업으로 진행하자' to the pending approval question for the exact benchmark plan",
+      "disposable_target": "Database a5f8d215-7dc9-4ce8-a28d-200fc668f6be; data source b16c26fa-617d-4560-ab9d-80760cadf080",
+      "write_evidence": "Created page 3ee53280-64be-81a7-8e70-cd8d99157b49; verified via API list; temporary database later in_trash=true"
     },
     {
       "transport": "api",
       "operation": "update",
-      "status": "approval_required",
-      "sample_size": null,
-      "tool_calls": null,
-      "elapsed_ms": null,
-      "returned_bytes": null,
+      "status": "measured",
+      "sample_size": 1,
+      "tool_calls": 1,
+      "elapsed_ms": 5214,
+      "returned_bytes": 825,
       "model_tokens": null,
       "model_token_source": "unavailable",
-      "metric_source": "Pending approved test database and live call",
-      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+      "metric_source": "PowerShell Stopwatch around uv run notion-scheduler update --apply; UTF-8 bytes of agent-visible CLI JSON; includes process startup, target/schema checks, preview and apply reread",
+      "evidence": "2026-10-04 live API sparse update; post-write list showed Plan, 상태 and 메모 values",
+      "approval": "User replied '다음 작업으로 진행하자' to the pending approval question for the exact benchmark plan",
+      "disposable_target": "Database a5f8d215-7dc9-4ce8-a28d-200fc668f6be; data source b16c26fa-617d-4560-ab9d-80760cadf080",
+      "write_evidence": "Updated page 3ee53280-64be-81a7-8e70-cd8d99157b49; verified via API list; temporary database later in_trash=true"
     },
     {
       "transport": "mcp",
@@ -58,28 +69,34 @@
     {
       "transport": "mcp",
       "operation": "create",
-      "status": "approval_required",
-      "sample_size": null,
-      "tool_calls": null,
-      "elapsed_ms": null,
-      "returned_bytes": null,
+      "status": "measured",
+      "sample_size": 1,
+      "tool_calls": 1,
+      "elapsed_ms": 1149,
+      "returned_bytes": 382,
       "model_tokens": null,
       "model_token_source": "unavailable",
-      "metric_source": "Pending approved test database and live call",
-      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+      "metric_source": "Caller wall clock around official remote Notion MCP create_pages; UTF-8 bytes of tool text result; authenticated connection and schema fetch excluded",
+      "evidence": "2026-10-04 live MCP create; post-write API list showed the approved fields",
+      "approval": "User replied '다음 작업으로 진행하자' to the pending approval question for the exact benchmark plan",
+      "disposable_target": "Database a5f8d215-7dc9-4ce8-a28d-200fc668f6be; data source b16c26fa-617d-4560-ab9d-80760cadf080",
+      "write_evidence": "Created page 3ee53280-64be-81bd-bd8a-d20451563c13; verified via API list and MCP fetch; temporary database later in_trash=true"
     },
     {
       "transport": "mcp",
       "operation": "update",
-      "status": "approval_required",
-      "sample_size": null,
-      "tool_calls": null,
-      "elapsed_ms": null,
-      "returned_bytes": null,
+      "status": "measured",
+      "sample_size": 1,
+      "tool_calls": 1,
+      "elapsed_ms": 1055,
+      "returned_bytes": 50,
       "model_tokens": null,
       "model_token_source": "unavailable",
-      "metric_source": "Pending approved test database and live call",
-      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+      "metric_source": "Caller wall clock around official remote Notion MCP update_page with allow_async=false; UTF-8 bytes of tool text result; pre-update fetch excluded",
+      "evidence": "2026-10-04 live MCP sparse update; post-write API list and MCP fetch showed Plan, 상태 and 메모 values",
+      "approval": "User replied '다음 작업으로 진행하자' to the pending approval question for the exact benchmark plan",
+      "disposable_target": "Database a5f8d215-7dc9-4ce8-a28d-200fc668f6be; data source b16c26fa-617d-4560-ab9d-80760cadf080",
+      "write_evidence": "Updated page 3ee53280-64be-81bd-bd8a-d20451563c13; verified via API list and MCP fetch; temporary database later in_trash=true"
     }
   ]
 }

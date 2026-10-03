@@ -1,8 +1,10 @@
 """CLI contracts with an injected service; no external Notion calls."""
 
 import json
+import io
+import sys
 
-from notion_scheduler.cli import main
+from notion_scheduler.cli import _emit, main
 from notion_scheduler.schema import SchedulerTask, Target
 from notion_scheduler.tasks import Preview
 
@@ -81,3 +83,11 @@ def test_list_filters_projects_and_limits_output(capsys):
     assert json.loads(capsys.readouterr().out)["error"]["code"] == "InputError"
     assert main(["list", "--limit", "0"], scheduler=fake) == 2
     assert json.loads(capsys.readouterr().out)["error"]["code"] == "InputError"
+
+
+def test_json_output_handles_windows_legacy_encoding(monkeypatch):
+    buffer = io.BytesIO()
+    stream = io.TextIOWrapper(buffer, encoding="cp949", write_through=True)
+    monkeypatch.setattr(sys, "stdout", stream)
+    _emit({"ok": True, "priority": "🔵 보통 (P3)"})
+    assert json.loads(buffer.getvalue().decode("utf-8"))["priority"] == "🔵 보통 (P3)"

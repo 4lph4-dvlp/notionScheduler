@@ -66,7 +66,16 @@ def _scheduler(args: argparse.Namespace) -> Scheduler:
 
 
 def _emit(value: dict) -> None:
-    print(json.dumps({"schema_version": 1, **value}, ensure_ascii=False, default=str))
+    payload = {"schema_version": 1, **value}
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except (OSError, ValueError):
+            pass
+    try:
+        print(json.dumps(payload, ensure_ascii=False, default=str))
+    except UnicodeEncodeError:
+        print(json.dumps(payload, ensure_ascii=True, default=str))
 
 
 def main(argv: list[str] | None = None, *, scheduler: Scheduler | None = None) -> int:

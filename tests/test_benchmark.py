@@ -54,10 +54,14 @@ def test_measured_write_requires_real_evidence():
     data = report()
     entry = data["measurements"][1]
     entry.update(status="measured", sample_size=1, tool_calls=1, elapsed_ms=100, returned_bytes=100)
+    data["cleanup"] = {"database_id": "temporary", "in_trash": True, "evidence": "independent retrieve"}
     with pytest.raises(ValueError, match="approval"):
         validate_report(data)
     entry.update(approval="user approval", disposable_target="test source", write_evidence="created page ID")
     validate_report(data)
+    del data["cleanup"]
+    with pytest.raises(ValueError, match="cleanup"):
+        validate_report(data)
 
 
 def test_character_count_cannot_masquerade_as_model_tokens():
