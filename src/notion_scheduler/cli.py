@@ -15,7 +15,11 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="notion-scheduler")
     parser.add_argument("--env-file", help="Optional file containing Notion environment variables")
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("list", help="List Scheduler tasks")
+    listing = commands.add_parser("list", help="List Scheduler tasks")
+    listing.add_argument("--status", help="Keep tasks with this exact Scheduler status")
+    listing.add_argument("--contains", help="Keep titles containing this text, case-insensitively")
+    listing.add_argument("--limit", type=int, help="Return at most this many tasks")
+    listing.add_argument("--fields", help="Comma-separated task fields to return; page_id is always included")
     for name in ("preview", "create", "update", "complete"):
         command = commands.add_parser(name)
         if name == "preview":
@@ -71,7 +75,20 @@ def main(argv: list[str] | None = None, *, scheduler: Scheduler | None = None) -
         service = scheduler or _scheduler(args)
         if args.command == "list":
             tasks = service.list_tasks()
-            _emit({"ok": True, "action": "list", "tasks": [asdict(task) for task in tasks], "count": len(tasks)})
+            if args.limit is not None and args.limit < 1:
+                raise InputError("--limit must be a positive integer.")
+            available = set(asdict(tasks[0])) if tasks else {"page_id", "title", "selection", "category", "due_date", "plan_date", "priority", "status", "memo"}
+            selected = [name.strip() for name in args.fields.split(",")] if args.fields else None
+            if selected is not None and (not all(selected) or any(name not in available for name in selected)):
+                raise InputError("--fields contains an unknown or empty task field.")
+            filtered = [task for task in tasks if (not args.status or task.status == args.status) and (not args.contains or args.contains.casefold() in task.title.casefold())]
+            matching_count = len(filtered)
+            if args.limit is not None:
+                filtered = filtered[:args.limit]
+            records = [asdict(task) for task in filtered]
+            if selected is not None:
+                records = [{name: row[name] for name in dict.fromkeys(["page_id", *selected])} for row in records]
+            _emit({"ok": True, "action": "list", "tasks": records, "count": len(records), "matching_count": matching_count})
             return 0
         operation = args.operation if args.command == "preview" else args.command
         if operation == "create":

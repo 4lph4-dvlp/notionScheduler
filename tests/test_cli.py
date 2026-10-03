@@ -13,7 +13,7 @@ class FakeScheduler:
         self.args = None
 
     def list_tasks(self):
-        return [SchedulerTask(page_id="one", title="Buy groceries")]
+        return [SchedulerTask(page_id="one", title="Buy groceries", status="시작 전"), SchedulerTask(page_id="two", title="Call plumber", status="완료")]
 
     def preview_create(self, **fields):
         self.args = fields
@@ -68,3 +68,16 @@ def test_missing_create_title_is_safe_error(capsys):
     assert result["ok"] is False
     assert result["error"]["code"] == "InputError"
     assert fake.applied == []
+
+
+def test_list_filters_projects_and_limits_output(capsys):
+    fake = FakeScheduler()
+    assert main(["list", "--status", "시작 전", "--contains", "GROCER", "--fields", "title,status", "--limit", "1"], scheduler=fake) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["tasks"] == [{"page_id": "one", "title": "Buy groceries", "status": "시작 전"}]
+    assert result["matching_count"] == 1
+    assert result["count"] == 1
+    assert main(["list", "--fields", "unknown"], scheduler=fake) == 2
+    assert json.loads(capsys.readouterr().out)["error"]["code"] == "InputError"
+    assert main(["list", "--limit", "0"], scheduler=fake) == 2
+    assert json.loads(capsys.readouterr().out)["error"]["code"] == "InputError"

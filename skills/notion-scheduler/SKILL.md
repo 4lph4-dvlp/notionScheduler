@@ -9,7 +9,7 @@ Use the `notion-scheduler` CLI to manage the personal Scheduler. The direct Noti
 
 ## Read and write
 
-- `notion-scheduler list` returns versioned JSON with all Scheduler tasks.
+- `notion-scheduler list` returns versioned JSON with all Scheduler tasks. For a compact agent response, use `list --status '시작 전' --fields page_id,title,due_date,status --limit 20`; `--contains TEXT` also filters titles. The API still reads every page to avoid silently omitting matches, while the JSON result includes only the selected tasks and fields.
 - `notion-scheduler create --title "Pay rent" --category 개인 --due-date 2026-10-05` previews a new task. Add `--apply` only when the user requested the write and the preview matches that request.
 - `notion-scheduler update --page-id PAGE_ID --plan-date 2026-10-04 --status '진행 중'` previews a sparse edit. Add `--apply` after checking the target page and changed properties. An exact `--lookup-title` is allowed only when it identifies one page.
 - `notion-scheduler complete --page-id PAGE_ID` previews a status change to `완료`; add `--apply` for an authorized completion.
