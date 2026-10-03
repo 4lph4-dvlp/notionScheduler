@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "access_context": "Read-only on the personal Scheduler: local Notion integration token for API and a separately authenticated official remote Notion MCP OAuth connection. Data source 21d53280-64be-80ec-af4e-000b679f03bb. No live write performed.",
+  "measurements": [
+    {
+      "transport": "api",
+      "operation": "read",
+      "status": "measured",
+      "sample_size": 91,
+      "tool_calls": 1,
+      "sdk_requests": 1,
+      "elapsed_ms": 2197,
+      "returned_bytes": 15951,
+      "model_tokens": null,
+      "model_token_source": "unavailable",
+      "metric_source": "benchmarks/compare.py api-read; Python perf_counter around one paginated SDK query; UTF-8 bytes of four-column projected JSON",
+      "evidence": "2026-10-04 local API read using cutoff 2026-07-05 and DueDate on/after cutoff OR 상태 != 완료"
+    },
+    {
+      "transport": "api",
+      "operation": "create",
+      "status": "approval_required",
+      "sample_size": null,
+      "tool_calls": null,
+      "elapsed_ms": null,
+      "returned_bytes": null,
+      "model_tokens": null,
+      "model_token_source": "unavailable",
+      "metric_source": "Pending approved test database and live call",
+      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+    },
+    {
+      "transport": "api",
+      "operation": "update",
+      "status": "approval_required",
+      "sample_size": null,
+      "tool_calls": null,
+      "elapsed_ms": null,
+      "returned_bytes": null,
+      "model_tokens": null,
+      "model_token_source": "unavailable",
+      "metric_source": "Pending approved test database and live call",
+      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+    },
+    {
+      "transport": "mcp",
+      "operation": "read",
+      "status": "measured",
+      "sample_size": 91,
+      "tool_calls": 1,
+      "elapsed_ms": 570,
+      "returned_bytes": 15176,
+      "model_tokens": null,
+      "model_token_source": "unavailable",
+      "metric_source": "Official remote Notion MCP query_data_sources SQL; caller wall clock; UTF-8 bytes of tool text result",
+      "evidence": "2026-10-04 SQL read of url, 이름, date:DueDate:start, 상태 with cutoff 2026-07-05 and the same OR predicate"
+    },
+    {
+      "transport": "mcp",
+      "operation": "create",
+      "status": "approval_required",
+      "sample_size": null,
+      "tool_calls": null,
+      "elapsed_ms": null,
+      "returned_bytes": null,
+      "model_tokens": null,
+      "model_token_source": "unavailable",
+      "metric_source": "Pending approved test database and live call",
+      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+    },
+    {
+      "transport": "mcp",
+      "operation": "update",
+      "status": "approval_required",
+      "sample_size": null,
+      "tool_calls": null,
+      "elapsed_ms": null,
+      "returned_bytes": null,
+      "model_tokens": null,
+      "model_token_source": "unavailable",
+      "metric_source": "Pending approved test database and live call",
+      "evidence": "Exact temporary target and task properties proposed in benchmarks/README.md"
+    }
+  ]
+}

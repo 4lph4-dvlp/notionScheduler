@@ -65,6 +65,15 @@ def test_standalone_list_paginates_and_preview_makes_no_writes():
     sdk.pages.update.assert_not_called()
 
 
+def test_filtered_query_keeps_filter_on_every_cursor_page():
+    sdk = sdk_with_pages()
+    client = NotionClient(token="test", database_id="database-one", sdk=sdk)
+    predicate = {"property": "상태", "status": {"does_not_equal": "완료"}}
+
+    assert len(client.query_pages("source-one", filter=predicate)) == 2
+    assert [call.kwargs["filter"] for call in sdk.data_sources.query.call_args_list] == [predicate, predicate]
+
+
 @pytest.mark.parametrize("children", [[], [{"id": "a", "name": "Scheduler"}, {"id": "b", "name": "Scheduler"}]])
 def test_ambiguous_target_fails_closed(children):
     sdk = sdk_with_pages()

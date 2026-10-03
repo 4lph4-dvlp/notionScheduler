@@ -78,8 +78,9 @@ def validate_scheduler_schema(properties):
             continue
         options = actual.get(expected_type, {}).get("options", [])
         names = {item.get("name") for item in options}
-        if required_options - names:
-            errors.append(name)
+        missing = required_options - names
+        if missing:
+            errors.append(name + ": missing " + ", ".join(sorted(missing)))
     if errors:
         raise SchemaError("Incompatible Scheduler properties: " + ", ".join(errors))
 

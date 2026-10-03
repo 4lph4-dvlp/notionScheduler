@@ -56,13 +56,15 @@ class NotionClient:
     @staticmethod
     def _safe_error(error: APIResponseError) -> Exception:
         status = getattr(error, "status", None)
+        request_id = getattr(error, "request_id", None)
+        suffix = f" (request ID: {request_id})" if request_id else ""
         if status == 401:
-            return AuthenticationError("Notion authentication failed. Check the integration token.")
+            return AuthenticationError("Notion authentication failed. Check the integration token." + suffix)
         if status == 403:
-            return PermissionError("Notion integration lacks Scheduler access.")
+            return PermissionError("Notion integration lacks Scheduler access." + suffix)
         if status == 404:
-            return TargetError("Configured Notion Scheduler could not be found.")
-        return TransportError("Notion API request failed.")
+            return TargetError("Configured Notion Scheduler could not be found." + suffix)
+        return TransportError("Notion API request failed." + suffix)
 
     def _read(self, operation: Callable[..., Any], **kwargs: Any) -> Any:
         for attempt in range(READ_529_RETRIES + 1):
@@ -127,12 +129,14 @@ class NotionClient:
         validate_scheduler_schema(properties)
         return properties
 
-    def query_pages(self, data_source_id: str) -> list[dict]:
-        """Read every task, including completed and old tasks, for safe lookups."""
+    def query_pages(self, data_source_id: str, *, filter: dict | None = None) -> list[dict]:
+        """Read every page matching an optional Notion filter with cursor pagination."""
         pages = []
         cursor = None
         while True:
             kwargs = {"data_source_id": data_source_id, "page_size": 100}
+            if filter is not None:
+                kwargs["filter"] = filter
             if cursor:
                 kwargs["start_cursor"] = cursor
             response = self._read(self.sdk.data_sources.query, **kwargs)
