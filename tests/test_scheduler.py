@@ -40,10 +40,12 @@ def sdk_with_pages():
     sdk = MagicMock()
     sdk.databases.retrieve.return_value = {"title": [{"plain_text": "Scheduler"}], "data_sources": [{"id": "source-one", "name": "Scheduler"}]}
     sdk.data_sources.retrieve.return_value = {"properties": schema()}
-    sdk.data_sources.query.side_effect = [
-        {"results": [page()], "has_more": True, "next_cursor": "next"},
-        {"results": [page("page-two", "Call plumber")], "has_more": False},
-    ]
+    def query(**kwargs):
+        if kwargs.get("start_cursor") == "next":
+            return {"results": [page("page-two", "Call plumber")], "has_more": False}
+        return {"results": [page()], "has_more": True, "next_cursor": "next"}
+
+    sdk.data_sources.query.side_effect = query
     return sdk
 
 
