@@ -23,7 +23,8 @@ class FakeScheduler:
 
     def preview_update(self, **fields):
         self.args = fields
-        return Preview("update", Target("db", "source", "Scheduler"), "one", SchedulerTask(page_id="one", title="Buy groceries"), {"Plan": {"date": {"start": fields["plan_date"]}}})
+        properties = {"Plan": {"date": {"start": fields["plan_date"]}}} if "plan_date" in fields else {"tag": {"multi_select": [{"name": tag} for tag in fields["tags"]]}}
+        return Preview("update", Target("db", "source", "Scheduler"), "one", SchedulerTask(page_id="one", title="Buy groceries"), properties)
 
     def preview_complete(self, **fields):
         self.args = fields
@@ -38,14 +39,15 @@ def test_list_and_create_are_versioned_and_create_defaults_to_preview(capsys):
     fake = FakeScheduler()
     assert main(["list"], scheduler=fake) == 0
     listed = json.loads(capsys.readouterr().out)
-    assert listed["schema_version"] == 1
+    assert listed["schema_version"] == 2
     assert listed["tasks"][0]["title"] == "Buy groceries"
 
-    assert main(["create", "--title", "Pay rent", "--category", "개인"], scheduler=fake) == 0
+    assert main(["create", "--title", "Pay rent", "--category", "일상", "--tag", "상담"], scheduler=fake) == 0
     preview = json.loads(capsys.readouterr().out)
     assert preview["dry_run"] is True
     assert fake.applied == []
-    assert fake.args["category"] == ["개인"]
+    assert fake.args["category"] == ["일상"]
+    assert fake.args["tags"] == ["상담"]
 
     assert main(["create", "--title", "Pay rent", "--apply"], scheduler=fake) == 0
     applied = json.loads(capsys.readouterr().out)
@@ -61,6 +63,13 @@ def test_update_plan_and_complete_need_apply(capsys):
     assert fake.applied == []
     assert main(["complete", "--page-id", "one", "--apply"], scheduler=fake) == 0
     assert json.loads(capsys.readouterr().out)["result"]["id"] == "created-or-updated"
+
+
+def test_clear_tags_is_explicit(capsys):
+    fake = FakeScheduler()
+    assert main(["update", "--page-id", "one", "--clear-tags"], scheduler=fake) == 0
+    assert fake.args["tags"] == []
+    assert json.loads(capsys.readouterr().out)["dry_run"] is True
 
 
 def test_missing_create_title_is_safe_error(capsys):

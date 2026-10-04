@@ -13,8 +13,8 @@ from notion_scheduler.tasks import Scheduler
 def schema():
     return {
         "이름": {"type": "title", "title": {}},
-        "선택": {"type": "select", "select": {"options": [{"name": "루틴"}, {"name": "이벤트"}]}},
-        "구분": {"type": "multi_select", "multi_select": {"options": [{"name": "개인"}, {"name": "학업"}]}},
+        "구분": {"type": "multi_select", "multi_select": {"options": [{"name": "일상"}, {"name": "학업"}]}},
+        "tag": {"type": "multi_select", "multi_select": {"options": [{"name": "NotionCL"}, {"name": "기전실"}, {"name": "상담"}]}},
         "DueDate": {"type": "date", "date": {}},
         "Plan": {"type": "date", "date": {}},
         "우선순위": {"type": "select", "select": {"options": [{"name": "🔴 긴급 (P1)"}, {"name": "🟡 중요 (P2)"}, {"name": "🔵 보통 (P3)"}, {"name": "⚪ 낮음 (P4)"}]}},
@@ -26,8 +26,8 @@ def schema():
 def page(page_id="page-one", title="Buy groceries"):
     return {"id": page_id, "properties": {
         "이름": {"title": [{"plain_text": title}]},
-        "선택": {"select": {"name": "이벤트"}},
-        "구분": {"multi_select": [{"name": "개인"}]},
+        "구분": {"multi_select": [{"name": "일상"}]},
+        "tag": {"multi_select": [{"name": "NotionCL"}]},
         "DueDate": {"date": {"start": "2026-10-05"}},
         "Plan": {"date": None},
         "우선순위": {"select": {"name": "🔵 보통 (P3)"}},
@@ -50,7 +50,7 @@ def sdk_with_pages():
 
 
 def test_standalone_list_paginates_and_preview_makes_no_writes():
-    assert __version__ == "0.1.0"
+    assert __version__ == "0.2.0"
     sdk = sdk_with_pages()
     tasks = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
 
@@ -58,6 +58,7 @@ def test_standalone_list_paginates_and_preview_makes_no_writes():
     preview = tasks.preview_update(page_id="page-one", memo="new note")
 
     assert [task.title for task in listed] == ["Buy groceries", "Call plumber"]
+    assert listed[0].tags == ("NotionCL",)
     assert preview.target.data_source_id == "source-one"
     assert preview.properties == {"메모": {"rich_text": [{"text": {"content": "new note"}}]}}
     assert sdk.data_sources.query.call_args_list[1].kwargs["start_cursor"] == "next"
@@ -91,15 +92,33 @@ def test_schema_mismatch_fails_closed():
     sdk.pages.update.assert_not_called()
 
 
+def test_current_schema_requires_tag_but_not_deleted_selection():
+    sdk = sdk_with_pages()
+    Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk)).list_tasks()
+    del sdk.data_sources.retrieve.return_value["properties"]["tag"]
+    with pytest.raises(SchemaError, match="tag"):
+        Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk)).list_tasks()
+
+
 def test_general_create_preview_and_apply():
     sdk = sdk_with_pages()
     scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
-    preview = scheduler.preview_create(title="Pay rent", category=("개인",), plan_date="2026-10-04", memo="Bank transfer")
+    preview = scheduler.preview_create(title="Pay rent", category=("일상",), tags=("NotionCL",), plan_date="2026-10-04", memo="Bank transfer")
     sdk.pages.create.assert_not_called()
+    assert "선택" not in preview.properties
+    assert preview.properties["tag"] == {"multi_select": [{"name": "NotionCL"}]}
     assert preview.properties["Plan"] == {"date": {"start": "2026-10-04"}}
     assert preview.properties["상태"] == {"status": {"name": "시작 전"}}
     scheduler.apply(preview)
     assert sdk.pages.create.call_args.kwargs["parent"]["data_source_id"] == "source-one"
+
+
+def test_create_without_category_or_tag_leaves_them_unset():
+    sdk = sdk_with_pages()
+    scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
+    preview = scheduler.preview_create(title="Pay rent")
+    assert "구분" not in preview.properties
+    assert "tag" not in preview.properties
 
 
 def test_sparse_update_can_change_plan_and_status_explicitly():
@@ -109,6 +128,18 @@ def test_sparse_update_can_change_plan_and_status_explicitly():
     assert set(preview.properties) == {"Plan", "상태"}
     scheduler.apply(preview)
     assert set(sdk.pages.update.call_args.kwargs["properties"]) == {"Plan", "상태"}
+
+
+def test_tag_update_and_clear_are_sparse():
+    sdk = sdk_with_pages()
+    scheduler = Scheduler(NotionClient(token="test", database_id="database-one", sdk=sdk))
+    tagged = scheduler.preview_update(page_id="page-one", tags=["상담"])
+    assert tagged.properties == {"tag": {"multi_select": [{"name": "상담"}]}}
+    cleared = scheduler.preview_update(page_id="page-one", tags=[])
+    assert cleared.properties == {"tag": {"multi_select": []}}
+    assert "구분" not in cleared.properties
+    with pytest.raises(InputError, match="Invalid tags option"):
+        scheduler.preview_update(page_id="page-one", tags=["unknown"])
 
 
 def test_complete_by_id_and_ambiguous_title_fails_closed():

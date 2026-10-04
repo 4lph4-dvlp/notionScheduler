@@ -23,11 +23,11 @@ class Scheduler:
         _, _, tasks = self._snapshot()
         return tasks
 
-    def preview_create(self, *, title: str, selection: str = "이벤트", category: tuple[str, ...] = ("개인",), priority: str = "🔵 보통 (P3)", status: str = "시작 전", **fields) -> Preview:
+    def preview_create(self, *, title: str, priority: str = "🔵 보통 (P3)", status: str = "시작 전", **fields) -> Preview:
         target, schema, tasks = self._snapshot()
         if any(task.title == title for task in tasks):
             raise InputError("A Scheduler task already has this title; use an explicit page ID to edit it.")
-        values = {"title": title, "selection": selection, "category": category, "priority": priority, "status": status, **fields}
+        values = {"title": title, "priority": priority, "status": status, **fields}
         return Preview("create", target, None, None, serialize_fields(values, schema))
 
     def preview_update(self, *, page_id: str | None = None, lookup_title: str | None = None, **fields) -> Preview:

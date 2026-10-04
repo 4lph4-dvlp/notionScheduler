@@ -4,6 +4,8 @@ Independent Python interface for general tasks in a personal Notion Scheduler. T
 
 This package has no CoursePilot dependency. Reads and previews are safe; writes require an explicit apply call. The public contract is versioned with the package release.
 
+Version 0.2 follows the current personal Scheduler schema: `이름`, `구분`, `tag`, `DueDate`, `Plan`, `우선순위`, `상태`, and `메모`. The former `선택` property is no longer required or written. `tag` is an optional task value: it can be read or changed explicitly, while CoursePilot academic sync preserves it. The CLI JSON contract is version 2.
+
 ## Install and configure
 
 Install from this repository with `pip install .` or `uv tool install .`. Set `NOTION_TOKEN` and one Scheduler target selector: `NOTION_DATA_SOURCE_ID`, `NOTION_DATABASE_ID`, or `NOTION_DATABASE_NAME`. The Notion integration must have access to the target database.

@@ -43,8 +43,8 @@ class Target:
 class SchedulerTask:
     page_id: str
     title: str
-    selection: str | None = None
     category: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
     due_date: str | None = None
     plan_date: str | None = None
     priority: str | None = None
@@ -54,8 +54,8 @@ class SchedulerTask:
 
 SCHEDULER_SCHEMA = {
     "이름": ("title", frozenset()),
-    "선택": ("select", frozenset({"루틴", "이벤트"})),
     "구분": ("multi_select", frozenset()),
+    "tag": ("multi_select", frozenset()),
     "DueDate": ("date", frozenset()),
     "Plan": ("date", frozenset()),
     "우선순위": ("select", frozenset({"🔴 긴급 (P1)", "🟡 중요 (P2)", "🔵 보통 (P3)", "⚪ 낮음 (P4)"})),
@@ -69,7 +69,7 @@ def plain_text(parts):
 
 
 def validate_scheduler_schema(properties):
-    """Validate all eight properties and required options without mutation."""
+    """Validate the current eight-property Scheduler contract without mutation."""
     errors = []
     for name, (expected_type, required_options) in SCHEDULER_SCHEMA.items():
         actual = properties.get(name)
@@ -91,8 +91,8 @@ def parse_page(page):
     return SchedulerTask(
         page_id=str(page["id"]),
         title=plain_text(props.get("이름", {}).get("title")),
-        selection=(props.get("선택", {}).get("select") or {}).get("name"),
         category=tuple(item.get("name", "") for item in props.get("구분", {}).get("multi_select") or []),
+        tags=tuple(item.get("name", "") for item in props.get("tag", {}).get("multi_select") or []),
         due_date=(props.get("DueDate", {}).get("date") or {}).get("start"),
         plan_date=(props.get("Plan", {}).get("date") or {}).get("start"),
         priority=(props.get("우선순위", {}).get("select") or {}).get("name"),
@@ -103,8 +103,8 @@ def parse_page(page):
 
 FIELD_TYPES = {
     "title": ("이름", "title"),
-    "selection": ("선택", "select"),
     "category": ("구분", "multi_select"),
+    "tags": ("tag", "multi_select"),
     "due_date": ("DueDate", "date"),
     "plan_date": ("Plan", "date"),
     "priority": ("우선순위", "select"),
@@ -131,11 +131,11 @@ def serialize_fields(fields: dict, schema: dict) -> dict:
                 raise InputError(f"Invalid {key} option.")
             properties[name] = {kind: {"name": value}}
         elif kind == "multi_select":
-            if not isinstance(value, (list, tuple)) or not value or any(not isinstance(item, str) for item in value):
-                raise InputError("category must be a nonempty list of option names.")
+            if not isinstance(value, (list, tuple)) or any(not isinstance(item, str) or not item for item in value):
+                raise InputError(f"{key} must be a list of option names.")
             choices = {item.get("name") for item in schema[name][kind].get("options", [])}
             if any(item not in choices for item in value):
-                raise InputError("Invalid category option.")
+                raise InputError(f"Invalid {key} option.")
             properties[name] = {kind: [{"name": item} for item in value]}
         else:
             if value is not None:
