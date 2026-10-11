@@ -12,7 +12,7 @@ from .tasks import Scheduler
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="notion-scheduler")
+    parser = argparse.ArgumentParser(prog="notionScheduler")
     parser.add_argument("--env-file", help="Optional file containing Notion environment variables")
     commands = parser.add_subparsers(dest="command", required=True)
     listing = commands.add_parser("list", help="List Scheduler tasks")

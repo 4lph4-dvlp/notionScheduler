@@ -15,7 +15,6 @@ def default_env_paths() -> tuple[Path, ...]:
         home / ".notionScheduler" / ".env",
         home / ".notionScheduler.env",
         home / ".config" / "notionScheduler" / ".env",
-        home / ".config" / "notion-scheduler" / ".env",
         Path.cwd() / ".env",
     ])
     return tuple(candidates)

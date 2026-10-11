@@ -6,9 +6,9 @@ from notion_scheduler.cli import _parser
 
 
 def test_documented_commands_parse_and_skill_has_frontmatter():
-    skill = Path(__file__).resolve().parents[1] / "skills" / "notion-scheduler" / "SKILL.md"
+    skill = Path(__file__).resolve().parents[1] / "skills" / "notionScheduler" / "SKILL.md"
     content = skill.read_text(encoding="utf-8")
-    assert content.startswith("---\nname: notion-scheduler\n")
+    assert content.startswith("---\nname: notionScheduler\n")
     assert "CoursePilot" in content
     parser = _parser()
     for args in (

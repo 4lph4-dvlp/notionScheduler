@@ -79,7 +79,7 @@ uv venv
 uv pip install -e ".[test]"
 ```
 
-설치가 완료되면 터미널에서 `notion-scheduler` 명령어를 바로 사용할 수 있습니다.
+설치가 완료되면 터미널에서 `notionScheduler` 명령어를 바로 사용할 수 있습니다.
 
 ---
 
@@ -91,14 +91,14 @@ uv pip install -e ".[test]"
 ```powershell
 $skillSource = python -c "from pathlib import Path; import notion_scheduler; print(Path(notion_scheduler.__file__).parent / 'skill')"
 $codexRoot = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
-$skillDestination = Join-Path $codexRoot 'skills/notion-scheduler'
+$skillDestination = Join-Path $codexRoot 'skills/notionScheduler'
 
 New-Item -ItemType Directory -Force -Path $skillDestination | Out-Null
 Copy-Item -LiteralPath (Join-Path $skillSource 'SKILL.md'), (Join-Path $skillSource 'JSON_CONTRACT.md') -Destination $skillDestination
 ```
 
 #### Antigravity / Claude Code / 기타 에이전트
-에이전트의 스킬 디렉터리(예: `~/.gemini/antigravity-cli/skills/notion-scheduler` 또는 프로젝트 내 `.skills/notion-scheduler`)에 [`skills/notion-scheduler/`](skills/notion-scheduler) 안의 파일들을 복사하여 배치하면 됩니다.
+에이전트의 스킬 디렉터리(예: `~/.gemini/antigravity-cli/skills/notionScheduler` 또는 프로젝트 내 `.skills/notionScheduler`)에 [`skills/notionScheduler/`](skills/notionScheduler) 안의 파일들을 복사하여 배치하면 됩니다.
 
 ---
 
@@ -124,14 +124,14 @@ Notion API 호출을 위해 환경 변수를 설정해야 합니다.
 `.env` 파일은 고정된 단일 경로가 강제되지 않으며, 사용자 및 에이전트의 운영 방식에 맞춰 아래 위치 중 편한 곳에 배치할 수 있습니다:
 
 1. **프로젝트 루트 디렉터리 (권장)**:
-   - 위치: `D:\dev\notion-scheduler\.env` (레포지토리 루트)
+   - 위치: `notionScheduler` 레포지토리 루트의 `.env`
    - 제공된 템플릿([`.env.example`](.env.example))을 복사하여 생성:
      ```powershell
      Copy-Item .env.example .env
      ```
    - 실행:
      ```bash
-     notion-scheduler --env-file .env list
+     notionScheduler --env-file .env list
      ```
 
 2. **사용자 홈 디렉터리 (전역 공용 설정, 권장)**:
@@ -149,15 +149,15 @@ Notion API 호출을 위해 환경 변수를 설정해야 합니다.
      ```
 
 > 💡 **Tip: `--env-file` 옵션 없이 바로 실행하고 싶다면?**  
-> OS 시스템 환경 변수(Windows 시스템 설정)에 등록하거나, PowerShell 프로필(`$PROFILE`)에 등록해두면 파일 지정 없이 `notion-scheduler list`처럼 바로 실행할 수 있습니다:
+> OS 시스템 환경 변수(Windows 시스템 설정)에 등록하거나, PowerShell 프로필(`$PROFILE`)에 등록해두면 파일 지정 없이 `notionScheduler list`처럼 바로 실행할 수 있습니다:
 > ```powershell
 > [Environment]::SetEnvironmentVariable("NOTION_TOKEN", "ntn_xxxx...", "User")
 > [Environment]::SetEnvironmentVariable("NOTION_DATABASE_ID", "xxxx-xxxx...", "User")
 > ```
 
 > ⚠️ **주의**: `--env-file` 플래그를 사용할 경우 반드시 서브커맨드(`list`, `create` 등) **앞**에 위치해야 합니다.
-> - 올바른 예: `notion-scheduler --env-file .env list`
-> - 잘못된 예: `notion-scheduler list --env-file .env`
+> - 올바른 예: `notionScheduler --env-file .env list`
+> - 잘못된 예: `notionScheduler list --env-file .env`
 
 ---
 
@@ -176,16 +176,16 @@ Notion API 호출을 위해 환경 변수를 설정해야 합니다.
 
 ```bash
 # 전체 태스크 조회
-notion-scheduler list
+notionScheduler list
 
 # 상태별 필터링
-notion-scheduler list --status "시작 전"
+notionScheduler list --status "시작 전"
 
 # 제목 검색 (대소문자 구분 없음)
-notion-scheduler list --contains "보고서"
+notionScheduler list --contains "보고서"
 
 # 반환 개수 제한 및 필요한 필드만 축약 조회 (에이전트 컨텍스트 절약에 유용)
-notion-scheduler list --status "시작 전" --fields page_id,title,due_date,status --limit 10
+notionScheduler list --status "시작 전" --fields page_id,title,due_date,status --limit 10
 ```
 
 #### 주요 옵션
@@ -202,13 +202,13 @@ notion-scheduler list --status "시작 전" --fields page_id,title,due_date,stat
 
 ```bash
 # 1) 생성 미리보기 (실제 반영되지 않음)
-notion-scheduler create --title "프로젝트 기획서 작성" --category "개발" --due-date "2026-10-15"
+notionScheduler create --title "프로젝트 기획서 작성" --category "개발" --due-date "2026-10-15"
 
 # 2) 실제 생성 적용 (--apply)
-notion-scheduler create --title "프로젝트 기획서 작성" --category "개발" --due-date "2026-10-15" --apply
+notionScheduler create --title "프로젝트 기획서 작성" --category "개발" --due-date "2026-10-15" --apply
 
 # 태그 및 우선순위 지정 생성
-notion-scheduler create \
+notionScheduler create \
   --title "치과 정기 검진" \
   --category "일상" \
   --tag "건강" \
@@ -236,19 +236,19 @@ notion-scheduler create \
 
 ```bash
 # page_id 기준으로 수정 미리보기
-notion-scheduler update --page-id "1aa53280-xxxx-xxxx-xxxx-xxxxxxxxxxxx" --plan-date "2026-10-14" --status "진행 중"
+notionScheduler update --page-id "1aa53280-xxxx-xxxx-xxxx-xxxxxxxxxxxx" --plan-date "2026-10-14" --status "진행 중"
 
 # 실제 수정 적용 (--apply)
-notion-scheduler update --page-id "1aa53280-xxxx-xxxx-xxxx-xxxxxxxxxxxx" --plan-date "2026-10-14" --status "진행 중" --apply
+notionScheduler update --page-id "1aa53280-xxxx-xxxx-xxxx-xxxxxxxxxxxx" --plan-date "2026-10-14" --status "진행 중" --apply
 
 # 제목으로 단일 페이지를 검색하여 수정 (결과가 정확히 1건일 때만 동작)
-notion-scheduler update --lookup-title "치과 정기 검진" --due-date "2026-10-22" --apply
+notionScheduler update --lookup-title "치과 정기 검진" --due-date "2026-10-22" --apply
 
 # 태그 수정 (기존 태그에 추가/대체)
-notion-scheduler update --page-id "<PAGE_ID>" --tag "예약완료" --apply
+notionScheduler update --page-id "<PAGE_ID>" --tag "예약완료" --apply
 
 # 모든 태그 제거
-notion-scheduler update --page-id "<PAGE_ID>" --clear-tags --apply
+notionScheduler update --page-id "<PAGE_ID>" --clear-tags --apply
 ```
 
 #### 대상 지정 옵션 (둘 중 하나 필수)
@@ -263,10 +263,10 @@ notion-scheduler update --page-id "<PAGE_ID>" --clear-tags --apply
 
 ```bash
 # 완료 처리 미리보기
-notion-scheduler complete --page-id "<PAGE_ID>"
+notionScheduler complete --page-id "<PAGE_ID>"
 
 # 실제 완료 처리 적용 (--apply)
-notion-scheduler complete --page-id "<PAGE_ID>" --apply
+notionScheduler complete --page-id "<PAGE_ID>" --apply
 ```
 
 ---
@@ -276,9 +276,9 @@ notion-scheduler complete --page-id "<PAGE_ID>" --apply
 `create`, `update`, `complete` 동작을 명시적으로 프리뷰 전용으로 호출합니다.
 
 ```bash
-notion-scheduler preview create --title "새로운 일정"
-notion-scheduler preview update --page-id "<PAGE_ID>" --status "완료"
-notion-scheduler preview complete --page-id "<PAGE_ID>"
+notionScheduler preview create --title "새로운 일정"
+notionScheduler preview update --page-id "<PAGE_ID>" --status "완료"
+notionScheduler preview complete --page-id "<PAGE_ID>"
 ```
 
 ---
