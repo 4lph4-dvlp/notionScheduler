@@ -93,13 +93,23 @@ class NotionClient:
                 raise TargetError("Configured data source has no database parent.")
             return Target(str(parent_id), self.data_source_id, plain_text(source.get("title")))
         if self.database_id:
-            database = self._read(self.sdk.databases.retrieve, database_id=self.database_id)
-            children = database.get("data_sources", [])
-            matches = children if len(children) == 1 else [child for child in children if child.get("name") == self.database_name]
-            if len(matches) != 1 or not matches[0].get("id"):
-                raise TargetError("Configured database does not identify one Scheduler data source.")
-            child = matches[0]
-            return Target(self.database_id, str(child["id"]), plain_text(database.get("title")) or str(child.get("name", "")))
+            try:
+                database = self._read(self.sdk.databases.retrieve, database_id=self.database_id)
+                children = database.get("data_sources", [])
+                matches = children if len(children) == 1 else [child for child in children if child.get("name") == self.database_name]
+                if len(matches) != 1 or not matches[0].get("id"):
+                    raise TargetError("Configured database does not identify one Scheduler data source.")
+                child = matches[0]
+                return Target(self.database_id, str(child["id"]), plain_text(database.get("title")) or str(child.get("name", "")))
+            except TargetError:
+                try:
+                    source = self._read(self.sdk.data_sources.retrieve, data_source_id=self.database_id)
+                    parent_id = source.get("parent", {}).get("database_id")
+                    if parent_id:
+                        return Target(str(parent_id), self.database_id, plain_text(source.get("title")))
+                except TargetError:
+                    pass
+                raise
         if not self.database_name:
             raise TargetError("A Scheduler database ID, data source ID, or exact name is required.")
         matches = []
