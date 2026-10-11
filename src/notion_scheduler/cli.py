@@ -55,6 +55,10 @@ def _scheduler(args: argparse.Namespace) -> Scheduler:
         if not os.path.isfile(args.env_file):
             raise InputError("Environment file was not found.")
         load_dotenv(args.env_file, override=False)
+    else:
+        from .env import load_default_env
+
+        load_default_env(override=False)
     token = os.getenv("NOTION_TOKEN") or os.getenv("NOTION_API_KEY") or ""
     if not token:
         raise InputError("NOTION_TOKEN or NOTION_API_KEY is required.")

@@ -1,5 +1,6 @@
 """Standalone fake-SDK behavior checks; no live Notion calls."""
 
+import os
 from unittest.mock import MagicMock
 
 import pytest
@@ -165,3 +166,23 @@ def test_invalid_option_and_stale_preview_never_write():
     with pytest.raises(InputError, match="changed"):
         scheduler.apply(preview)
     sdk.pages.update.assert_not_called()
+
+
+def test_default_env_paths_and_load_default_env(tmp_path, monkeypatch):
+    from notion_scheduler.env import default_env_paths, load_default_env
+
+    monkeypatch.delenv("NOTION_TOKEN", raising=False)
+    monkeypatch.delenv("NOTION_API_KEY", raising=False)
+    monkeypatch.delenv("NOTION_SCHEDULER_ENV", raising=False)
+
+    paths = default_env_paths()
+    assert any("notionScheduler" in str(p) for p in paths)
+
+    custom_env = tmp_path / "custom.env"
+    custom_env.write_text("NOTION_TOKEN=custom_loaded_token\n", encoding="utf-8")
+    monkeypatch.setenv("NOTION_SCHEDULER_ENV", str(custom_env))
+
+    assert default_env_paths()[0] == custom_env
+    loaded = load_default_env(override=False)
+    assert loaded == custom_env
+    assert os.getenv("NOTION_TOKEN") == "custom_loaded_token"

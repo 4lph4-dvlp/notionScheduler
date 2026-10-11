@@ -3,13 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "notion-scheduler"
+name = "notionScheduler"
 version = "0.2.0"
 description = "Independent direct-API client for personal Notion Scheduler tasks"
 requires-python = ">=3.11"
 dependencies = ["notion-client>=3.1,<4", "python-dotenv>=1,<2"]
 
 [project.scripts]
+notionScheduler = "notion_scheduler.cli:main"
 notion-scheduler = "notion_scheduler.cli:main"
 
 [project.optional-dependencies]
