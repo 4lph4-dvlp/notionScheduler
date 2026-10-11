@@ -101,7 +101,7 @@ wheels = [
 ]
 
 [[package]]
-name = "notion-scheduler"
+name = "notionscheduler"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
